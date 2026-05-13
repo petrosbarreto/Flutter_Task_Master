@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:typed_data';
 
 /// Serviço centralizado para interações com Supabase
 class SupabaseService {
@@ -50,8 +51,8 @@ class SupabaseService {
   }
   
   /// Obtém uma tabela do banco de dados
-  PostgrestListResponse getTable(String tableName) {
-    return client.from(tableName).select();
+  Future<List<Map<String, dynamic>>> getTable(String tableName) async {
+    return await client.from(tableName).select();
   }
   
   /// Upload de arquivo para o bucket de storage
@@ -63,7 +64,7 @@ class SupabaseService {
     final String fileName = filePath.split('/').last;
     await client.storage.from(bucketName).uploadBinary(
       fileName,
-      fileBytes,
+      Uint8List.fromList(fileBytes),
     );
     return client.storage.from(bucketName).getPublicUrl(fileName);
   }

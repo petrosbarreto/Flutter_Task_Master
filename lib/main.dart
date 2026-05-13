@@ -1,78 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'config/supabase_config.dart';
+import 'package:provider/provider.dart';
+import 'package:task_master/core/constants/app_theme.dart';
+import 'package:task_master/core/services/supabase_service.dart';
+import 'package:task_master/features/auth/providers/auth_provider.dart';
+import 'package:task_master/features/auth/screens/auth_screen.dart';
+import 'package:task_master/features/tasks/providers/task_provider.dart';
+import 'package:task_master/features/tasks/screens/tasks_screen.dart';
 
-void main() async {
-  // Inicializa Supabase
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
-    url: SupabaseConfig.supabaseUrl,
-    anonKey: SupabaseConfig.supabaseAnonKey,
+    url: 'https://hozlbckkkzkaaimyijfx.supabase.co',
+    anonKey: 'sb_publishable_ROAtF6MFCEIN24oPyFhNow_o1qwQd8S',
   );
-  
-  runApp(const TaskMasterApp());
+  runApp(const MyApp());
 }
 
-class TaskMasterApp extends StatelessWidget {
-  const TaskMasterApp({Key? key}) : super(key: key);
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'TaskMaster',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
-      home: const HomeScreen(),
+    return MultiProvider(
+      providers: [
+        Provider<SupabaseService>(
+          create: (_) => SupabaseService(),
+        ),
+        ChangeNotifierProvider<AuthProvider>(
+          create: (context) => AuthProvider(
+            context.read<SupabaseService>(),
+          ),
+        ),
+        ChangeNotifierProvider<TaskProvider>(
+          create: (context) {
+            final taskProvider = TaskProvider(
+              context.read<SupabaseService>(),
+            );
+            context.read<AuthProvider>().addListener(() {
+              taskProvider.handleAuthChanged(
+                context.read<AuthProvider>().currentUser,
+              );
+            });
+            return taskProvider;
+          },
+        ),
+      ],
+      child: const _AppContent(),
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class _AppContent extends StatelessWidget {
+  const _AppContent();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('TaskMaster'),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.task_alt, size: 80, color: Colors.blue),
-            const SizedBox(height: 20),
-            const Text(
-              'TaskMaster',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Gerenciador de Tarefas com Flutter + Supabase',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Configure o Supabase em lib/config/supabase_config.dart'),
-                  ),
-                );
-              },
-              child: const Text('Começar'),
-            ),
-          ],
-        ),
+    return MaterialApp(
+      title: 'Task Master',
+      theme: AppTheme.build(),
+      home: Consumer<AuthProvider>(
+        builder: (context, authProvider, _) {
+          if (authProvider.isAuthenticated) {
+            return const TasksScreen();
+          }
+          return const AuthScreen();
+        },
       ),
     );
   }

@@ -9,16 +9,16 @@ class SupabaseConfig {
   
   /// Nome do banco de dados
   static const String databaseName = 'postgres';
-  
-  /// Tabelas principais
-  static class Tables {
-    static const String users = 'users';
-    static const String tasks = 'tasks';
-    static const String categories = 'categories';
-  }
-  
-  /// Buckets de storage
-  static class Buckets {
-    static const String taskImages = 'task-images';
-  }
+}
+
+/// Tabelas principais
+class SupabaseTables {
+  static const String users = 'users';
+  static const String tasks = 'tasks';
+  static const String categories = 'categories';
+}
+
+/// Buckets de storage
+class SupabaseBuckets {
+  static const String taskImages = 'task-images';
 }
